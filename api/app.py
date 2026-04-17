@@ -169,7 +169,17 @@ def listar_usuarios():
 
 @app.route("/")
 def home():
-    return "API funcionando"
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Teste</title>
+    </head>
+    <body>
+        <h1>Funcionou 🚀</h1>
+    </body>
+    </html>
+    """
 
 app = app
 
