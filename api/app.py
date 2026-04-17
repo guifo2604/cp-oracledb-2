@@ -171,14 +171,145 @@ def listar_usuarios():
 def home():
     return """
     <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Teste</title>
-    </head>
-    <body>
-        <h1>Funcionou 🚀</h1>
-    </body>
-    </html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Cashback - Oracle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div class="container mx-auto px-4 py-10 max-w-4xl">
+        
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">SISTEMA DE CASHBACK</h1>
+                <p class="text-gray-600">Gerenciamento de recompensas via Oracle DB</p>
+            </div>
+            <button onclick="processarCashback()" id="btnProcessar" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center transition-all">
+                <i class="fas fa-coins mr-2"></i>
+                <span>Executar Regras de Cashback</span>
+            </button>
+        </div>
+
+        <div id="alerta" class="hidden mb-6 p-4 rounded-lg flex items-center shadow-sm">
+            <i id="alertaIcone" class="mr-3 text-xl"></i>
+            <span id="alertaTexto" class="font-medium"></span>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-6 border-b border-gray-200 bg-gray-50 flex items-center">
+                <i class="fas fa-users text-blue-600 mr-2"></i>
+                <h2 class="text-xl font-semibold text-gray-700">Usuários e Saldos</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 border-b">ID</th>
+                            <th class="py-3 px-6 border-b">Nome</th>
+                             <th class="py-3 px-6 border-b text-center">Presença</th>
+                            <th class="py-3 px-6 border-b text-right">Saldo Atual</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaCorpo" class="text-gray-700 text-sm font-light">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "";
+
+        // Função para buscar usuários
+        async function buscarUsuarios() {
+            try {
+                const response = await fetch(`${API_URL}/usuarios`);
+                const dados = await response.json();
+                
+                const tabela = document.getElementById('tabelaCorpo');
+                tabela.innerHTML = '';
+
+                dados.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-200 hover:bg-gray-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="py-4 px-6 font-medium">${user.id}</td>
+                        <td class="py-4 px-6">${user.nome}</td>
+                        <td class="py-4 px-6 text-center font-semibold text-gray-400">
+                            ${user.presencas}
+                        </td>
+                        <td class="py-4 px-6 text-right font-bold text-green-600">
+                            R$ ${user.saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                    `;
+                    tabela.appendChild(tr);
+                });
+            } catch (error) {
+                mostrarAlerta("Erro ao conectar com o servidor. O back-end está rodando?", "erro");
+            }
+        }
+
+        // Função para disparar o cashback
+        async function processarCashback() {
+            const btn = document.getElementById('btnProcessar');
+            const originalContent = btn.innerHTML;
+            
+            // Estágio de Carregamento
+            btn.disabled = true;
+            btn.classList.replace('bg-blue-600', 'bg-gray-400');
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Processando...`;
+
+            try {
+                const response = await fetch(`${API_URL}/executar-cashback`, { method: 'POST' });
+                
+                if (response.ok) {
+                    mostrarAlerta("Sucesso! Cashback processado no Oracle DB.", "sucesso");
+                    buscarUsuarios(); // Atualiza a lista
+                } else {
+                    mostrarAlerta("Erro no banco de dados ao processar.", "erro");
+                }
+            } catch (error) {
+                mostrarAlerta("Falha na comunicação com a API.", "erro");
+            } finally {
+                btn.disabled = false;
+                btn.classList.replace('bg-gray-400', 'bg-blue-600');
+                btn.innerHTML = originalContent;
+            }
+        }
+
+        // Função para mostrar alertas na tela
+        function mostrarAlerta(mensagem, tipo) {
+            const alerta = document.getElementById('alerta');
+            const texto = document.getElementById('alertaTexto');
+            const icone = document.getElementById('alertaIcone');
+
+            alerta.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+
+            if (tipo === 'erro') {
+                alerta.classList.add('bg-red-100', 'text-red-700');
+                icone.className = 'fas fa-exclamation-circle mr-3';
+            } else {
+                alerta.classList.add('bg-green-100', 'text-green-700');
+                icone.className = 'fas fa-check-circle mr-3';
+            }
+
+            texto.innerText = mensagem;
+            
+            setTimeout(() => {
+                alerta.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Carrega os dados ao iniciar a página
+        window.onload = buscarUsuarios;
+    </script>
+</body>
+</html>
     """
 
 app = app
