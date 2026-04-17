@@ -165,9 +165,13 @@ def listar_usuarios():
         if conn:
             conn.close()
 
+
+
 @app.route("/")
-def index():
-    return send_from_directory(".../templates", "index.html")
+def home():
+    return "API funcionando"
 
 app = app
+
+
 
